@@ -50,5 +50,24 @@ def submit_solution():
     return jsonify({"status": "ok"})
 
 
+@app.route("/api/stats", methods=["GET"])
+def stats():
+    total = 0
+    remaining = 0
+
+    for f in os.listdir(IMAGES_DIR):
+        if f.endswith(".jpeg"):
+            total += 1
+            txt_path = os.path.join(SOLUTIONS_DIR, f + ".txt")
+            if not os.path.exists(txt_path):
+                remaining += 1
+
+    return jsonify({
+        "total_images": total,
+        "remaining": remaining,
+        "labeled": total - remaining
+    })
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=1100, debug=True)

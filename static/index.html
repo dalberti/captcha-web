@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Captcha App</title>
+  <title>Image Quiz</title>
   <style>
     #history img {
       width: 100px;
@@ -12,6 +12,11 @@
     }
     #history img.selected {
       border-color: blue;
+    }
+    #counter {
+      font-size: 0.9em;
+      color: #555;
+      margin-left: 10px;
     }
     #answer {
     width: 340px;
@@ -25,7 +30,10 @@
   </style>
 </head>
 <body>
-  <h1>Inserisci la risposta</h1>
+  <h1>
+    Inserisci la risposta
+    <span id="counter"></span>
+  </h1>
 
   <div id="image-container"></div>
   <input type="text" id="answer" placeholder="Scrivi qui la risposta">
@@ -40,10 +48,19 @@
     const inputEl = document.getElementById("answer");
     const submitBtn = document.getElementById("submit-btn");
     const historyEl = document.getElementById("history");
+    const counterEl = document.getElementById("counter");
 
-    let mainImage = null;       // ultima immagine principale
-    let currentImage = null;    // immagine visualizzata al momento
-    const lastImages = [];      // {filename, imgElement}
+    let mainImage = null;
+    let currentImage = null;
+    const lastImages = [];
+
+    async function updateStats() {
+      const res = await fetch("/api/stats");
+      if (res.ok) {
+        const data = await res.json();
+        counterEl.innerText = `(Rimanenti: ${data.remaining}/${data.total_images})`;
+      }
+    }
 
     async function loadImage(filename = null, isMain = true) {
       let chosenFilename = filename;
@@ -53,6 +70,7 @@
         const data = await res.json();
         if (data.error) {
           document.getElementById("image-container").innerText = data.error;
+          await updateStats();
           return;
         }
         chosenFilename = data.filename;
@@ -62,12 +80,13 @@
       if (isMain) mainImage = chosenFilename;
 
       document.getElementById("image-container").innerHTML =
-        `<img src="/api/get_image_file/${currentImage}" width="300">`;
+        `<img src="/api/get_image_file/${currentImage}" width="436">`;
       inputEl.value = "";
       inputEl.focus();
       statusEl.innerText = "";
 
       addToHistory(currentImage);
+      await updateStats();
     }
 
     function addToHistory(filename) {
@@ -79,7 +98,7 @@
       img.addEventListener("click", () => {
         lastImages.forEach(e => e.imgElement.classList.remove("selected"));
         img.classList.add("selected");
-        loadImage(filename, false); // non aggiorniamo mainImage
+        loadImage(filename, false);
       });
 
       historyEl.prepend(img);
@@ -105,11 +124,10 @@
         statusEl.style.color = "green";
         statusEl.innerText = "Risposta salvata!";
 
-        // Se l'immagine corrente era una precedente, torniamo all'ultima principale
         if (currentImage !== mainImage) {
           loadImage(mainImage, true);
         } else {
-          await loadImage(null, true); // nuova immagine principale
+          await loadImage(null, true);
         }
       } else {
         statusEl.style.color = "red";
