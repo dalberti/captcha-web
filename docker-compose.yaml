@@ -1,0 +1,12 @@
+services:
+  captcha_web:
+    image: captcha-web:latest
+    ports:
+      - 1100:5000
+    volumes:
+      - /root/docker-data/captcha-web/images:/app/images
+      - /root/docker-data/captcha-web/solutions:/app/solutions
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==Server1
