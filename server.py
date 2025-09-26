@@ -43,8 +43,6 @@ def submit_solution():
         return jsonify({"error": "Missing fields"}), 400
 
     txt_path = os.path.join(SOLUTIONS_DIR, filename + ".txt")
-    if os.path.exists(txt_path):
-        return jsonify({"error": "Solution already exists"}), 400
 
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write(text.strip())
